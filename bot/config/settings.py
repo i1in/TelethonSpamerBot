@@ -10,6 +10,7 @@ class Config:
     API_HASH: str = os.getenv("API_HASH")
     PHONE: str = os.getenv("PHONE")
     ALLOWED_USERS: list = list(map(int, os.getenv("ALLOWED_USERS").split(",")))
+    OWNER_USERNAME: str = os.getenv("OWNER_USERNAME")
     
     DB_PATH: str = BASE_DIR / "database" / os.getenv("DB_PATH")
     

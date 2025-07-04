@@ -2,10 +2,15 @@ from datetime import datetime
 from telethon import events
 from telethon.tl.functions.channels import GetFullChannelRequest, JoinChannelRequest, LeaveChannelRequest
 from . import client, db
-from config.settings import Config as config
-from utils.channels import ChannelHandlerHelpers as helper
 
-@client.on(events.NewMessage(pattern='/sub'))
+from bot.controllers.channels import ChannelQueries
+from bot.config.settings import Config as config
+from bot.utils.helper import ChannelHandlerHelpers as helper
+from bot.handlers import register
+
+db = ChannelQueries(db)
+
+@register(events.NewMessage(pattern='/sub'))
 async def message_handler(event):
     if event.sender_id not in config.ALLOWED_USERS:
         return
@@ -45,17 +50,16 @@ async def message_handler(event):
     
     await event.reply(f"Subcribed to [{channel.chats[0].title}]({channel_url}) [{channel.full_chat.id}]", parse_mode="md")
     
-@client.on(events.NewMessage(pattern='/all'))
+@register(events.NewMessage(pattern='/all'))
 async def message_handler(event):
     if event.sender_id not in config.ALLOWED_USERS:
         return
     
     query = await db.get_all_channels()
-    print(query)
     channels = "\n".join(f"{index + 1}. [{channel[1]}]({channel[2]}) ID: `{channel[0]}`" for index, channel in enumerate(query)) if len(query) > 0 else "`Nothing...`"
     await event.reply("All subscribed channels: \n" + channels, parse_mode="md")
     
-@client.on(events.NewMessage(pattern='/info'))
+@register(events.NewMessage(pattern='/info'))
 async def message_handler(event):
     if event.sender_id not in config.ALLOWED_USERS:
         return
@@ -64,6 +68,7 @@ async def message_handler(event):
     query = await db.get_channel(channel)
     if not query:
         await event.reply(f"This name/id/link isn't found in database", parse_mode="md")
+        return
     
     txt = "\n".join(f"{key}: {value}" for index, (key, value) in enumerate(zip(["ID", "Name", "URL"], query))) + f"\n{datetime.fromtimestamp(query[3])}"
     
@@ -72,7 +77,7 @@ async def message_handler(event):
         parse_mode="md"
     )
     
-@client.on(events.NewMessage(pattern="/unsub"))
+@register(events.NewMessage(pattern="/unsub"))
 async def message_handler(event):
     if event.sender_id not in config.ALLOWED_USERS:
         return
@@ -90,6 +95,7 @@ async def message_handler(event):
         f"Removed [{query_find[1]}]({query_find[2]}) from database.", 
         parse_mode="md"
     )
-    
-    
-    
+
+@register(events.NewMessage(pattern="/test"))
+async def message_handler(event):
+    print(db)

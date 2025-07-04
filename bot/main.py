@@ -1,17 +1,21 @@
 import asyncio
 import logging
-import handlers
-import events
 
 from dotenv import load_dotenv
 from telethon import TelegramClient 
+
+import bot.handlers as handlers
+import bot.events as events
 from bot.config.settings import Config
-from bot.utils.channels import ChannelQueries
+from bot.config.cache import Cache
+from bot.database.database import Database
+from bot.controllers.service import DataService
+from bot.controllers.comment import CommentQueries
 from bot.register_all import register
 
 load_dotenv()
 config = Config()
-db = ChannelQueries()
+db = Database()
 
 async def main() -> None:
     client = TelegramClient(
@@ -27,13 +31,17 @@ async def main() -> None:
     
     handlers.client = client
     handlers.db = db
+    handlers.register_all()
     
     events.client = client
     events.db = db
+    events.register_all()
     
-    await db.initTable()
+    service = await DataService.create(db)
+
+    Cache.COMMENT_TEXT = await CommentQueries(db).get_comment_text()
+    print(Cache.COMMENT_TEXT)
     
-    register()
     await client.run_until_disconnected()
     
 if __name__ == '__main__':
